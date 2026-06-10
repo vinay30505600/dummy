@@ -6,11 +6,13 @@
 // ============================================================
 
 // POST /api/admin/simulate-error
+const sendToDynatrace = require("../config/dynatrace");
 const simulateError = (req, res, next) => {
   console.error("[CHAOS] Intentional 500 error triggered by admin.");
   const err = new Error("Intentional server error for chaos testing");
   err.statusCode = 500;
   next(err);
+  await sendToDynatrace("CHAOS ERROR", "Intentional 500 triggered", { type: "error_spike" });
 };
 
 // POST /api/admin/simulate-delay
@@ -19,6 +21,7 @@ const simulateDelay = async (req, res) => {
   console.warn(`[CHAOS] Simulating slow API — delay: ${delay}ms`);
   await new Promise((resolve) => setTimeout(resolve, delay));
   res.json({ success: true, message: `Response delayed by ${delay}ms`, delay });
+  await sendToDynatrace("CHAOS DELAY", `Slow API triggered: ${delay}ms`, { type: "latency_spike" });
 };
 
 // POST /api/admin/simulate-cpu
@@ -38,6 +41,7 @@ const simulateCPU = (req, res) => {
   const elapsed = Date.now() - start;
   console.warn(`[CHAOS] CPU spike completed in ${elapsed}ms`);
   res.json({ success: true, message: `CPU stress completed in ${elapsed}ms`, result: result.toFixed(2) });
+  await sendToDynatrace("CHAOS CPU", "CPU spike triggered", { type: "cpu_spike" });
 };
 
 // POST /api/admin/simulate-memory
@@ -63,6 +67,7 @@ const simulateMemory = (req, res) => {
     message: `Allocated ~${allocated}MB of memory for testing. Will be released by GC.`,
     warning: "Monitor heap metrics in your observability tool.",
   });
+  await sendToDynatrace("CHAOS MEMORY", "Memory spike triggered", { type: "memory_spike" });
   // leakBucket goes out of scope → eligible for GC
 };
 
