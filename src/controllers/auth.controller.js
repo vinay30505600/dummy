@@ -1,3 +1,5 @@
+const sendToDynatrace = require("../config/dynatrace");
+
 const userModel = require("../models/user.model")
 const jwt = require("jsonwebtoken")
 const emailService = require("../services/email.service")
@@ -24,6 +26,7 @@ async function userRegisterController(req, res) {
     const user = await userModel.create({
         email, password, name
     })
+    await sendToDynatrace("User Registered", `New user: ${email}`, { role: user.role });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "3d" })
 
@@ -37,6 +40,8 @@ async function userRegisterController(req, res) {
         },
         token
     })
+    await sendToDynatrace("User Login", `Login success: ${email}`);
+    
 
     await emailService.sendRegistrationEmail(user.email, user.name)
 }
@@ -56,6 +61,7 @@ async function userLoginController(req, res) {
             message: "Email or password is INVALID"
         })
     }
+    await sendToDynatrace("Login Failed", `Bad credentials: ${email}`, { severity: "WARN" });
 
     const isValidPassword = await user.comparePassword(password)
 
