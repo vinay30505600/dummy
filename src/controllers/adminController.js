@@ -7,7 +7,7 @@
 
 // POST /api/admin/simulate-error
 const sendToDynatrace = require("../config/dynatrace");
-const simulateError = (req, res, next) => {
+const simulateError = async (req, res, next) => {
   console.error("[CHAOS] Intentional 500 error triggered by admin.");
   const err = new Error("Intentional server error for chaos testing");
   err.statusCode = 500;
@@ -25,7 +25,7 @@ const simulateDelay = async (req, res) => {
 };
 
 // POST /api/admin/simulate-cpu
-const simulateCPU = (req, res) => {
+const simulateCPU = async (req, res) => {
   console.warn("[CHAOS] Simulating CPU spike — starting intensive computation...");
   const start = Date.now();
   const duration = 5000; // 5 seconds of busy work
@@ -45,7 +45,7 @@ const simulateCPU = (req, res) => {
 };
 
 // POST /api/admin/simulate-memory
-const simulateMemory = (req, res) => {
+const simulateMemory = async (req, res) => {
   // ⚠️  WARNING: This intentionally allocates large arrays.
   // Memory will be GC'd eventually, but will spike RSS/heap metrics.
   // Do not call repeatedly without monitoring memory usage.
